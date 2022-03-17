@@ -16,6 +16,9 @@ from . import CommandWithHandling
 from .common import CommandResult
 
 
+MAP_TYPE_OUTLINE = "ol"
+
+
 class GetCachedMapInfo(CommandWithHandling):
     """Get cached map info command."""
 
@@ -69,7 +72,7 @@ class GetMajorMap(CommandWithHandling):
         :return: A message response
         """
         values = data["value"].split(",")
-        map_id = data["mid"]
+        map_id = data.get("mid")
 
         return HandlingResult(
             HandlingState.SUCCESS,
@@ -213,7 +216,7 @@ class GetMapSubSet(CommandWithHandling):
 
         :return: A message response
         """
-        if MapSetType.has_value(data["type"]):
+        if MapSetType.has_value(data.get("type", MAP_TYPE_OUTLINE)):
             subtype = data.get("subtype", data.get("subType", None))
             name = None
             if subtype == "15":
@@ -289,7 +292,7 @@ class GetMinorMap(CommandWithHandling):
     name = "getMinorMap"
 
     def __init__(self, *, map_id: str, piece_index: int) -> None:
-        super().__init__({"mid": map_id, "type": "ol", "pieceIndex": piece_index})
+        super().__init__({"mid": map_id, "type": MAP_TYPE_OUTLINE, "pieceIndex": piece_index})
 
     @classmethod
     def _handle_body_data_dict(
@@ -299,8 +302,8 @@ class GetMinorMap(CommandWithHandling):
 
         :return: A message response
         """
-        if data.get("type", "ol") == "ol":
-            # onMinorMap sends no type, so fallback to "ol"
+        if data.get("type", MAP_TYPE_OUTLINE) == MAP_TYPE_OUTLINE:
+            # onMinorMap sends no type, so fallback to MAP_TYPE_OUTLINE
             event_bus.notify(MinorMapEvent(data["pieceIndex"], data["pieceValue"]))
             return HandlingResult.success()
 
