@@ -48,7 +48,7 @@ class VacuumBot:
         self.fw_version: Optional[str] = None
         self.events: Final[EventBus] = EventBus(self.execute_command)
 
-        self.map: Final[Map] = Map(self.execute_command, self.events)
+        self.map: Final[Map] = Map(self.execute_command, self.events, 50, 50)
 
         async def on_pos(event: PositionsEvent) -> None:
             if self._status == StatusEvent(True, VacuumState.DOCKED):

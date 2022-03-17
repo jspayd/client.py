@@ -135,11 +135,15 @@ class Map:
         self,
         execute_command: Callable[[Command], Coroutine[Any, Any, None]],
         event_bus: EventBus,
+        piece_width: int = 100,
+        piece_height: int = 100,
     ):
         self._execute_command = execute_command
         self._event_bus = event_bus
+        self._piece_width = piece_width
+        self._piece_height = piece_height
 
-        self._map_data: Final[MapData] = MapData()
+        self._map_data: Final[MapData] = MapData(self._piece_width, self._piece_height)
         self._amount_rooms: int = 0
         self._last_image: Optional[LastImage] = None
         self._listeners: list[EventListener] = []
@@ -200,21 +204,22 @@ class Map:
         for i in range(64):
             if i > 0:
                 if i % 8 != 0:
-                    image_y += 100
+                    image_y += self._piece_height
                 else:
-                    image_x += 100
+                    image_x += self._piece_width
                     image_y = 0
 
             current_piece = self._map_data.map_pieces[i]
             if current_piece.in_use:
-                for x in range(100):
+                for x in range(self._piece_width):
                     current_column = current_piece.points[x]
-                    for y in range(100):
+                    for y in range(self._piece_height):
                         pixel_type = current_column[y]
                         point_x = image_x + x
                         point_y = image_y + y
-                        if (point_x > 6400) or (point_y > 6400):
+                        if (point_x > 64 * self._piece_width) or (point_y > 64 * self._piece_height):
                             _LOGGER.error(
+                                # TODO: Update log message
                                 "[get_base64_map] Map Limit 6400!! X: %d Y: %d",
                                 point_x,
                                 point_y,
@@ -299,7 +304,7 @@ class Map:
             return self._last_image.base64_image
 
         _LOGGER.debug("[get_base64_map] Begin")
-        image = Image.new("RGBA", (6400, 6400))
+        image = Image.new("RGBA", (64 * self._piece_width, 64 * self._piece_height))
         draw = DashedImageDraw(image)
 
         self._draw_map_pieces(draw)
@@ -372,11 +377,13 @@ class MapPiece:
 
     _NOT_INUSE_CRC32: int = 1295764014
 
-    def __init__(self, on_change: Callable[[], None], index: int) -> None:
+    def __init__(self, on_change: Callable[[], None], index: int, width: int = 100, height: int = 100) -> None:
         self._on_change = on_change
         self._index = index
         self._points: Optional[ndarray] = None
         self._crc32: int = MapPiece._NOT_INUSE_CRC32
+        self._width = width
+        self._height = height
 
     def crc32_indicates_update(self, crc32: str) -> bool:
         """Return True if update is required."""
@@ -397,7 +404,7 @@ class MapPiece:
     def points(self) -> ndarray:
         """I'm the 'x' property."""
         if not self.in_use or self._points is None:
-            return zeros((100, 100))
+            return zeros((self._width, self._height))
         return self._points
 
     def update_points(self, base64_data: str) -> None:
@@ -410,7 +417,7 @@ class MapPiece:
             self._on_change()
 
         if self.in_use:
-            self._points = reshape(list(decoded), (100, 100))
+            self._points = reshape(list(decoded), (self._width, self._height))
         else:
             self._points = None
 
@@ -521,15 +528,17 @@ class LastImage:
 class MapData:
     """Map data."""
 
-    def __init__(self) -> None:
+    def __init__(self, piece_width: int = 100, piece_height: int = 100) -> None:
         self._changed: bool = False
+        self._piece_width = piece_width
+        self._piece_height = piece_height
 
         def on_change() -> None:
             self._changed = True
 
         self._on_change = on_change
         self._map_pieces: OnChangedList[MapPiece] = OnChangedList(
-            on_change, [MapPiece(on_change, i) for i in range(64)]
+            on_change, [MapPiece(on_change, i, self._piece_width, self._piece_height) for i in range(64)]
         )
         self._map_subsets: OnChangedDict[int, MapSubsetEvent] = OnChangedDict(on_change)
         self._positions: OnChangedList[Position] = OnChangedList(on_change)
