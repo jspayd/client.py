@@ -292,7 +292,10 @@ class GetMinorMap(CommandWithHandling):
     name = "getMinorMap"
 
     def __init__(self, *, map_id: str, piece_index: int) -> None:
-        super().__init__({"mid": map_id, "type": MAP_TYPE_OUTLINE, "pieceIndex": piece_index})
+        args = {"type": MAP_TYPE_OUTLINE, "pieceIndex": piece_index}
+        if map_id is not None:
+            args["mid"] = map_id
+        super().__init__({"type": MAP_TYPE_OUTLINE, "pieceIndex": piece_index})
 
     @classmethod
     def _handle_body_data_dict(
