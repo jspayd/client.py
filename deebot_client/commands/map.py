@@ -21,6 +21,7 @@ _LOGGER = get_logger(__name__)
 
 
 MAP_TYPE_OUTLINE = "ol"
+MAP_TYPE_WIFI = "st"
 
 
 class GetCachedMapInfo(CommandWithHandling):
@@ -68,7 +69,7 @@ class GetMajorMap(CommandWithHandling):
     name = "getMajorMap"
 
     def __init__(self) -> None:
-        super().__init__({"type": MAP_TYPE_OUTLINE})
+        super().__init__({"type": MAP_TYPE_WIFI})
 
     @classmethod
     def _handle_body_data_dict(
