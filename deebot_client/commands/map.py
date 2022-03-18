@@ -14,6 +14,10 @@ from ..events.event_bus import EventBus
 from ..message import HandlingResult, HandlingState
 from . import CommandWithHandling
 from .common import CommandResult
+from ..logging_filter import get_logger
+
+
+_LOGGER = get_logger(__name__)
 
 
 MAP_TYPE_OUTLINE = "ol"
@@ -307,6 +311,7 @@ class GetMinorMap(CommandWithHandling):
         """
         if data.get("type", MAP_TYPE_OUTLINE) == MAP_TYPE_OUTLINE:
             # onMinorMap sends no type, so fallback to MAP_TYPE_OUTLINE
+            _LOGGER.warning(f"Received getMinorMap response: {data}")
             event_bus.notify(MinorMapEvent(data["pieceIndex"], data["pieceValue"]))
             return HandlingResult.success()
 

@@ -28,7 +28,7 @@ class ReportStats(Message):
             area=data.get("area"),
             time=data.get("time"),
             type=data.get("type"),
-            cleaning_id=data["cid"],
+            cleaning_id=data.get("cid"),
             status=status,
             content=[int(float(x)) for x in data.get("content", "").split(",") if x],
         )
