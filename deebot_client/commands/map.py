@@ -67,6 +67,9 @@ class GetMajorMap(CommandWithHandling):
 
     name = "getMajorMap"
 
+    def __init__(self) -> None:
+        super().__init__({"type": MAP_TYPE_OUTLINE})
+
     @classmethod
     def _handle_body_data_dict(
         cls, event_bus: EventBus, data: dict[str, Any]
@@ -299,7 +302,8 @@ class GetMinorMap(CommandWithHandling):
         args = {"type": MAP_TYPE_OUTLINE, "pieceIndex": piece_index}
         if map_id is not None:
             args["mid"] = map_id
-        super().__init__({"type": MAP_TYPE_OUTLINE, "pieceIndex": piece_index})
+
+        super().__init__(args)
 
     @classmethod
     def _handle_body_data_dict(
@@ -311,7 +315,6 @@ class GetMinorMap(CommandWithHandling):
         """
         if data.get("type", MAP_TYPE_OUTLINE) == MAP_TYPE_OUTLINE:
             # onMinorMap sends no type, so fallback to MAP_TYPE_OUTLINE
-            _LOGGER.warning(f"Received getMinorMap response: {data}")
             event_bus.notify(MinorMapEvent(data["pieceIndex"], data["pieceValue"]))
             return HandlingResult.success()
 
